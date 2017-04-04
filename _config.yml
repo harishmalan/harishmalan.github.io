@@ -28,7 +28,7 @@ author:  # change following line to your infomation.
   skill_icon2:
     - name: fa-linux
     - name: icon-python
-  desc: Hi , I am Software Engineer spelizlied in Machine learning, Deep learning and embedded software.  # Describe yourself.
+  desc: Hi , I am Software Engineer Specialized in Machine learning, Deep learning and embedded software.  # Describe yourself.
 
 # comment
 disqus:  # if you wanna comment feature, go to https://disqus.com/ to get your configuration; if not, comment following two lines.
