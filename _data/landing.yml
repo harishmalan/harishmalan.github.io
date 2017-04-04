@@ -20,7 +20,7 @@
 
 - id: blog
   i18n: nav.blog
-  name: Blog
+  name: Projects
   tpl: blog.html
   css: testimonials navy-section
 
