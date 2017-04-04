@@ -5,8 +5,8 @@ title: Harish Malan
 description: harishmalan's blog.
 keywords: harishmalan,sekaran harish malan,harishmalan,github,gh-pages
 baseurl:  /harishmalan.github.io # if you have suburl as homepage like '/homepage', please change it to '/homepage' and your repo's name should be 'homepage'
-#url: http://jarrekk.github.io/Jalpc  # url should be 'http://<github_username>.github.io/homepage' as before
-url: http://127.0.0.1:4000
+url: http://harishmalan.github.io  # url should be 'http://<github_username>.github.io/homepage' as before
+#url: http://127.0.0.1:4000
 img_path: /harishmalan.github.io/static/assets/img/blog  # url should be '/homepage/static/assets/img/blog' as before
 
 # author -- index page "about me" section
