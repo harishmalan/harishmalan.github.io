@@ -1,0 +1,749 @@
+
+<h1 id="tv-script-generation">TV Script Generation</h1>
+<p>In this project, you’ll generate your own <a href="https://en.wikipedia.org/wiki/The_Simpsons">Simpsons</a> TV scripts using RNNs.  You’ll be using part of the <a href="https://www.kaggle.com/wcukierski/the-simpsons-by-the-data">Simpsons dataset</a> of scripts from 27 seasons.  The Neural Network you’ll build will generate a new TV script for a scene at <a href="https://simpsonswiki.com/wiki/Moe's_Tavern">Moe’s Tavern</a>.</p>
+<h2 id="get-the-data">Get the Data</h2>
+<p>The data is already provided for you.  You’ll be using a subset of the original dataset.  It consists of only the scenes in Moe’s Tavern.  This doesn’t include other versions of the tavern, like “Moe’s Cavern”, “Flaming Moe’s”, “Uncle Moe’s Family Feed-Bag”, etc..</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">import</span> <span class="nn">helper</span>
+
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s">'./data/simpsons/moes_tavern_lines.txt'</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span>
+<span class="c"># Ignore notice, since we don't use it for analysing the data</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="mi">81</span><span class="p">:]</span>
+</code></pre>
+</div>
+
+<h2 id="explore-the-data">Explore the Data</h2>
+<p>Play around with <code class="highlighter-rouge">view_sentence_range</code> to view different parts of the data.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="n">view_sentence_range</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">'Dataset Stats'</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Roughly the number of unique words: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">({</span><span class="n">word</span><span class="p">:</span> <span class="bp">None</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()})))</span>
+<span class="n">scenes</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">'</span><span class="se">\n\n</span><span class="s">'</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Number of scenes: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">scenes</span><span class="p">)))</span>
+<span class="n">sentence_count_scene</span> <span class="o">=</span> <span class="p">[</span><span class="n">scene</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">)</span> <span class="k">for</span> <span class="n">scene</span> <span class="ow">in</span> <span class="n">scenes</span><span class="p">]</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Average number of sentences in each scene: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">sentence_count_scene</span><span class="p">)))</span>
+
+<span class="n">sentences</span> <span class="o">=</span> <span class="p">[</span><span class="n">sentence</span> <span class="k">for</span> <span class="n">scene</span> <span class="ow">in</span> <span class="n">scenes</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">scene</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">)]</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Number of lines: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sentences</span><span class="p">)))</span>
+<span class="n">word_count_sentence</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sentence</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">sentences</span><span class="p">]</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Average number of words in each line: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">word_count_sentence</span><span class="p">)))</span>
+
+<span class="k">print</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'The sentences {} to {}:'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">view_sentence_range</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">)[</span><span class="n">view_sentence_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">view_sentence_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Dataset Stats
+Roughly the number of unique words: 11492
+Number of scenes: 262
+Average number of sentences in each scene: 15.251908396946565
+Number of lines: 4258
+Average number of words in each line: 11.50164396430249
+
+The sentences 0 to 10:
+
+Moe_Szyslak: (INTO PHONE) Moe's Tavern. Where the elite meet to drink.
+Bart_Simpson: Eh, yeah, hello, is Mike there? Last name, Rotch.
+Moe_Szyslak: (INTO PHONE) Hold on, I'll check. (TO BARFLIES) Mike Rotch. Mike Rotch. Hey, has anybody seen Mike Rotch, lately?
+Moe_Szyslak: (INTO PHONE) Listen you little puke. One of these days I'm gonna catch you, and I'm gonna carve my name on your back with an ice pick.
+Moe_Szyslak: What's the matter Homer? You're not your normal effervescent self.
+Homer_Simpson: I got my problems, Moe. Give me another one.
+Moe_Szyslak: Homer, hey, you should not drink to forget your problems.
+Barney_Gumble: Yeah, you should only drink to enhance your social skills.
+</code></pre>
+</div>
+
+<h2 id="implement-preprocessing-functions">Implement Preprocessing Functions</h2>
+<p>The first thing to do to any dataset is preprocessing.  Implement the following preprocessing functions below:</p>
+<ul>
+  <li>Lookup Table</li>
+  <li>Tokenize Punctuation</li>
+</ul>
+
+<h3 id="lookup-table">Lookup Table</h3>
+<p>To create a word embedding, you first need to transform the words to ids.  In this function, create two dictionaries:</p>
+<ul>
+  <li>Dictionary to go from the words to an id, we’ll call <code class="highlighter-rouge">vocab_to_int</code></li>
+  <li>Dictionary to go from the id to word, we’ll call <code class="highlighter-rouge">int_to_vocab</code></li>
+</ul>
+
+<p>Return these dictionaries in the following tuple <code class="highlighter-rouge">(vocab_to_int, int_to_vocab)</code></p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">problem_unittests</span> <span class="kn">as</span> <span class="nn">tests</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+
+<span class="k">def</span> <span class="nf">create_lookup_tables</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="s">"""
+    Create lookup tables for vocabulary
+    :param text: The text of tv scripts split into words
+    :return: A tuple of dicts (vocab_to_int, int_to_vocab)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">vocab_to_int</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span><span class="p">:</span> <span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">word</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+    <span class="n">int_to_vocab</span> <span class="o">=</span> <span class="p">{</span><span class="n">ii</span><span class="p">:</span> <span class="n">word</span> <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">vocab_to_int</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">return</span> <span class="n">vocab_to_int</span><span class="p">,</span> <span class="n">int_to_vocab</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_create_lookup_tables</span><span class="p">(</span><span class="n">create_lookup_tables</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="tokenize-punctuation">Tokenize Punctuation</h3>
+<p>We’ll be splitting the script into a word array using spaces as delimiters.  However, punctuations like periods and exclamation marks make it hard for the neural network to distinguish between the word “bye” and “bye!”.</p>
+
+<p>Implement the function <code class="highlighter-rouge">token_lookup</code> to return a dict that will be used to tokenize symbols like “!” into “||Exclamation_Mark||”.  Create a dictionary for the following symbols where the symbol is the key and value is the token:</p>
+<ul>
+  <li>Period ( . )</li>
+  <li>Comma ( , )</li>
+  <li>Quotation Mark ( “ )</li>
+  <li>Semicolon ( ; )</li>
+  <li>Exclamation mark ( ! )</li>
+  <li>Question mark ( ? )</li>
+  <li>Left Parentheses ( ( )</li>
+  <li>Right Parentheses ( ) )</li>
+  <li>Dash ( – )</li>
+  <li>Return ( \n )</li>
+</ul>
+
+<table>
+  <tbody>
+    <tr>
+      <td>This dictionary will be used to token the symbols and add the delimiter (space) around it.  This separates the symbols as it’s own word, making it easier for the neural network to predict on the next word. Make sure you don’t use a token that could be confused as a word. Instead of using the token “dash”, try using something like “</td>
+      <td> </td>
+      <td>dash</td>
+      <td> </td>
+      <td>”.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">token_lookup</span><span class="p">():</span>
+    <span class="s">"""
+    Generate a dict to turn punctuation into a token.
+    :return: Tokenize dictionary where the key is the punctuation and the value is the token
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">punct_dist</span> <span class="o">=</span><span class="p">{</span>
+        <span class="s">'.'</span><span class="p">:</span> <span class="s">'period'</span><span class="p">,</span> <span class="s">','</span><span class="p">:</span> <span class="s">'comma'</span><span class="p">,</span> <span class="s">'"'</span><span class="p">:</span> <span class="s">'quotationmark'</span><span class="p">,</span><span class="s">';'</span><span class="p">:</span> <span class="s">'semicolon'</span><span class="p">,</span> <span class="s">'!'</span><span class="p">:</span> <span class="s">'exclamation_mark'</span><span class="p">,</span> <span class="s">'?'</span><span class="p">:</span> <span class="s">'question_mark'</span><span class="p">,</span> <span class="s">'('</span><span class="p">:</span> <span class="s">'left_parentheses'</span><span class="p">,</span> <span class="s">')'</span><span class="p">:</span> <span class="s">'right_parentheses'</span><span class="p">,</span>
+        <span class="s">'--'</span><span class="p">:</span> <span class="s">'dash'</span><span class="p">,</span> <span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">:</span> <span class="s">'return'</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">punct_dist</span>
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_tokenize</span><span class="p">(</span><span class="n">token_lookup</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h2 id="preprocess-all-the-data-and-save-it">Preprocess all the data and save it</h2>
+<p>Running the code cell below will preprocess all the data and save it to file.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="c"># Preprocess Training, Validation, and Testing Data</span>
+<span class="n">helper</span><span class="o">.</span><span class="n">preprocess_and_save_data</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">token_lookup</span><span class="p">,</span> <span class="n">create_lookup_tables</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<h1 id="check-point">Check Point</h1>
+<p>This is your first checkpoint. If you ever decide to come back to this notebook or have to restart the notebook, you can start from here. The preprocessed data has been saved to disk.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">import</span> <span class="nn">helper</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">problem_unittests</span> <span class="kn">as</span> <span class="nn">tests</span>
+
+<span class="n">int_text</span><span class="p">,</span> <span class="n">vocab_to_int</span><span class="p">,</span> <span class="n">int_to_vocab</span><span class="p">,</span> <span class="n">token_dict</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">load_preprocess</span><span class="p">()</span>
+</code></pre>
+</div>
+
+<h2 id="build-the-neural-network">Build the Neural Network</h2>
+<p>You’ll build the components necessary to build a RNN by implementing the following functions below:</p>
+<ul>
+  <li>get_inputs</li>
+  <li>get_init_cell</li>
+  <li>get_embed</li>
+  <li>build_rnn</li>
+  <li>build_nn</li>
+  <li>get_batches</li>
+</ul>
+
+<h3 id="check-the-version-of-tensorflow-and-access-to-gpu">Check the Version of TensorFlow and Access to GPU</h3>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">from</span> <span class="nn">distutils.version</span> <span class="kn">import</span> <span class="n">LooseVersion</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+
+<span class="c"># Check TensorFlow Version</span>
+<span class="k">assert</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="s">'1.0'</span><span class="p">),</span> <span class="s">'Please use TensorFlow version 1.0 or newer'</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'TensorFlow Version: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">))</span>
+
+<span class="c"># Check for a GPU</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">tf</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">gpu_device_name</span><span class="p">():</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">'No GPU found. Please use a GPU to train your neural network.'</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'Default GPU Device: {}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">gpu_device_name</span><span class="p">()))</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>TensorFlow Version: 1.0.1
+Default GPU Device: /gpu:0
+</code></pre>
+</div>
+
+<h3 id="input">Input</h3>
+<p>Implement the <code class="highlighter-rouge">get_inputs()</code> function to create TF Placeholders for the Neural Network.  It should create the following placeholders:</p>
+<ul>
+  <li>Input text placeholder named “input” using the <a href="https://www.tensorflow.org/api_docs/python/tf/placeholder">TF Placeholder</a> <code class="highlighter-rouge">name</code> parameter.</li>
+  <li>Targets placeholder</li>
+  <li>Learning Rate placeholder</li>
+</ul>
+
+<p>Return the placeholders in the following the tuple <code class="highlighter-rouge">(Input, Targets, LearingRate)</code></p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_inputs</span><span class="p">():</span>
+    <span class="s">"""
+    Create TF Placeholders for input, targets, and learning rate.
+    :return: Tuple (input, targets, learning rate)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span> <span class="s">'input'</span><span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span> <span class="s">'targets'</span><span class="p">)</span>
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span> <span class="s">'learning_rate'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">)</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_get_inputs</span><span class="p">(</span><span class="n">get_inputs</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="build-rnn-cell-and-initialize">Build RNN Cell and Initialize</h3>
+<p>Stack one or more <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/rnn/BasicLSTMCell"><code class="highlighter-rouge">BasicLSTMCells</code></a> in a <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/rnn/MultiRNNCell"><code class="highlighter-rouge">MultiRNNCell</code></a>.</p>
+<ul>
+  <li>The Rnn size should be set using <code class="highlighter-rouge">rnn_size</code></li>
+  <li>Initalize Cell State using the MultiRNNCell’s <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/rnn/MultiRNNCell#zero_state"><code class="highlighter-rouge">zero_state()</code></a> function
+    <ul>
+      <li>Apply the name “initial_state” to the initial state using <a href="https://www.tensorflow.org/api_docs/python/tf/identity"><code class="highlighter-rouge">tf.identity()</code></a></li>
+    </ul>
+  </li>
+</ul>
+
+<p>Return the cell and initial state in the following tuple <code class="highlighter-rouge">(Cell, InitialState)</code></p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_init_cell</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">rnn_size</span><span class="p">):</span>
+    <span class="s">"""
+    Create an RNN Cell and initialize it.
+    :param batch_size: Size of batches
+    :param rnn_size: Size of RNNs
+    :return: Tuple (cell, initialize state)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">lstm_layers</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">lstm</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">(</span><span class="n">rnn_size</span><span class="p">)</span>
+    <span class="c"># Add dropout to the cell</span>
+    <span class="n">drop</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">DropoutWrapper</span><span class="p">(</span><span class="n">lstm</span><span class="p">,</span> <span class="n">output_keep_prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">([</span><span class="n">drop</span><span class="p">]</span> <span class="o">*</span> <span class="n">lstm_layers</span><span class="p">)</span>
+    <span class="c">#cell = tf.contrib.rnn.MultiRNNCell([lstm] * lstm_layers)</span>
+    <span class="n">initial_state</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">zero_state</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">initial_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">'initial_state'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_get_init_cell</span><span class="p">(</span><span class="n">get_init_cell</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="word-embedding">Word Embedding</h3>
+<p>Apply embedding to <code class="highlighter-rouge">input_data</code> using TensorFlow.  Return the embedded sequence.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_embed</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">):</span>
+    <span class="s">"""
+    Create embedding for &lt;input_data&gt;.
+    :param input_data: TF placeholder for text input.
+    :param vocab_size: Number of words in vocabulary.
+    :param embed_dim: Number of embedding dimensions
+    :return: Embedded input.
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">embedding</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">((</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">embed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">embed</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_get_embed</span><span class="p">(</span><span class="n">get_embed</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="build-rnn">Build RNN</h3>
+<p>You created a RNN Cell in the <code class="highlighter-rouge">get_init_cell()</code> function.  Time to use the cell to create a RNN.</p>
+<ul>
+  <li>Build the RNN using the <a href="https://www.tensorflow.org/api_docs/python/tf/nn/dynamic_rnn"><code class="highlighter-rouge">tf.nn.dynamic_rnn()</code></a></li>
+  <li>Apply the name “final_state” to the final state using <a href="https://www.tensorflow.org/api_docs/python/tf/identity"><code class="highlighter-rouge">tf.identity()</code></a></li>
+</ul>
+
+<p>Return the outputs and final_state state in the following tuple <code class="highlighter-rouge">(Outputs, FinalState)</code></p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">build_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+    <span class="s">"""
+    Create a RNN using a RNN Cell
+    :param cell: RNN Cell
+    :param inputs: Input text data
+    :return: Tuple (Outputs, Final State)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">outputs</span><span class="p">,</span> <span class="n">final_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dynamic_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">final_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">final_state</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">"final_state"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">final_state</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_build_rnn</span><span class="p">(</span><span class="n">build_rnn</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="build-the-neural-network-1">Build the Neural Network</h3>
+<p>Apply the functions you implemented above to:</p>
+<ul>
+  <li>Apply embedding to <code class="highlighter-rouge">input_data</code> using your <code class="highlighter-rouge">get_embed(input_data, vocab_size, embed_dim)</code> function.</li>
+  <li>Build RNN using <code class="highlighter-rouge">cell</code> and your <code class="highlighter-rouge">build_rnn(cell, inputs)</code> function.</li>
+  <li>Apply a fully connected layer with a linear activation and <code class="highlighter-rouge">vocab_size</code> as the number of outputs.</li>
+</ul>
+
+<p>Return the logits and final state in the following tuple (Logits, FinalState)</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">build_nn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">rnn_size</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">):</span>
+    <span class="s">"""
+    Build part of the neural network
+    :param cell: RNN cell
+    :param rnn_size: Size of rnns
+    :param input_data: Input data
+    :param vocab_size: Vocabulary size
+    :return: Tuple (Logits, FinalState)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">embedding</span> <span class="o">=</span> <span class="n">get_embed</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">rnn_size</span><span class="p">)</span>
+    <span class="n">outputs</span><span class="p">,</span> <span class="n">final_state</span> <span class="o">=</span> <span class="n">build_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">embedding</span><span class="p">)</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal_initializer</span><span class="p">(</span><span class="n">stddev</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">bias</span><span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">()</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">fully_connected</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span>
+                                                        <span class="n">vocab_size</span><span class="p">,</span>
+                                                        <span class="n">weights_initializer</span> <span class="o">=</span> <span class="n">weight</span><span class="p">,</span>
+                                                        <span class="n">biases_initializer</span><span class="o">=</span><span class="n">bias</span><span class="p">,</span>
+                                                        <span class="n">activation_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+    <span class="c">#predictions = tf.contrib.layers.fully_connected(outputs, vocab_size, activation_fn=None)</span>
+    <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">final_state</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_build_nn</span><span class="p">(</span><span class="n">build_nn</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="batches">Batches</h3>
+<p>Implement <code class="highlighter-rouge">get_batches</code> to create batches of input and targets using <code class="highlighter-rouge">int_text</code>.  The batches should be a Numpy array with the shape <code class="highlighter-rouge">(number of batches, 2, batch size, sequence length)</code>. Each batch contains two elements:</p>
+<ul>
+  <li>The first element is a single batch of <strong>input</strong> with the shape <code class="highlighter-rouge">[batch size, sequence length]</code></li>
+  <li>The second element is a single batch of <strong>targets</strong> with the shape <code class="highlighter-rouge">[batch size, sequence length]</code></li>
+</ul>
+
+<p>If you can’t fill the last batch with enough data, drop the last batch.</p>
+
+<p>For exmple, <code class="highlighter-rouge">get_batches([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 2, 3)</code> would return a Numpy array of the following:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[
+  # First Batch
+  [
+    # Batch of Input
+    [[ 1  2  3], [ 7  8  9]],
+    # Batch of targets
+    [[ 2  3  4], [ 8  9 10]]
+  ],
+ 
+  # Second Batch
+  [
+    # Batch of Input
+    [[ 4  5  6], [10 11 12]],
+    # Batch of targets
+    [[ 5  6  7], [11 12 13]]
+  ]
+]
+</code></pre>
+</div>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_batches</span><span class="p">(</span><span class="n">int_text</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">):</span>
+    <span class="s">"""
+    Return batches of input and target
+    :param int_text: Text with the words replaced by their ids
+    :param batch_size: The size of batch
+    :param seq_length: The length of sequence
+    :return: Batches as a Numpy array
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">num_batch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">int_text</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span> <span class="n">seq_length</span> <span class="o">*</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="n">batches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_batch</span> <span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">seq_length</span><span class="p">)</span><span class="o">+</span><span class="n">j</span>
+            <span class="n">end_idx</span> <span class="o">=</span> <span class="n">start_idx</span> <span class="o">+</span> <span class="n">seq_length</span>
+            <span class="k">if</span> <span class="n">end_idx</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">int_text</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">batches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">int_text</span><span class="p">[</span> <span class="n">start_idx</span><span class="p">:</span> <span class="n">end_idx</span><span class="p">]</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="n">start_idx</span> <span class="o">+</span> <span class="n">seq_length</span><span class="o">*</span><span class="mi">2</span>
+            <span class="n">end_idx</span> <span class="o">=</span> <span class="n">end_idx</span> <span class="o">+</span>  <span class="n">seq_length</span><span class="o">+</span> <span class="n">seq_length</span>
+            <span class="k">if</span> <span class="n">end_idx</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">int_text</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">batches</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">int_text</span><span class="p">[</span> <span class="n">start_idx</span><span class="p">:</span> <span class="n">end_idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">batches</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_get_batches</span><span class="p">(</span><span class="n">get_batches</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h2 id="neural-network-training">Neural Network Training</h2>
+<h3 id="hyperparameters">Hyperparameters</h3>
+<p>Tune the following parameters:</p>
+
+<ul>
+  <li>Set <code class="highlighter-rouge">num_epochs</code> to the number of epochs.</li>
+  <li>Set <code class="highlighter-rouge">batch_size</code> to the batch size.</li>
+  <li>Set <code class="highlighter-rouge">rnn_size</code> to the size of the RNNs.</li>
+  <li>Set <code class="highlighter-rouge">seq_length</code> to the length of sequence.</li>
+  <li>Set <code class="highlighter-rouge">learning_rate</code> to the learning rate.</li>
+  <li>Set <code class="highlighter-rouge">show_every_n_batches</code> to the number of batches the neural network should print progress.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="c"># Number of Epochs</span>
+<span class="n">num_epochs</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="c"># Batch Size</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">256</span>
+<span class="c"># RNN Size</span>
+<span class="n">rnn_size</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="c"># Sequence Length</span>
+<span class="n">seq_length</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="c"># Learning Rate</span>
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="c"># Show stats for every n number of batches</span>
+<span class="n">show_every_n_batches</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">save_dir</span> <span class="o">=</span> <span class="s">'./save'</span>
+</code></pre>
+</div>
+
+<h3 id="build-the-graph">Build the Graph</h3>
+<p>Build the graph using the neural network you implemented.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">from</span> <span class="nn">tensorflow.contrib</span> <span class="kn">import</span> <span class="n">seq2seq</span>
+
+<span class="n">train_graph</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">train_graph</span><span class="o">.</span><span class="n">as_default</span><span class="p">():</span>
+    <span class="n">vocab_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">int_to_vocab</span><span class="p">)</span>
+    <span class="n">input_text</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">lr</span> <span class="o">=</span> <span class="n">get_inputs</span><span class="p">()</span>
+    <span class="n">input_data_shape</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">input_text</span><span class="p">)</span>
+    <span class="n">cell</span><span class="p">,</span> <span class="n">initial_state</span> <span class="o">=</span> <span class="n">get_init_cell</span><span class="p">(</span><span class="n">input_data_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rnn_size</span><span class="p">)</span>
+    <span class="n">logits</span><span class="p">,</span> <span class="n">final_state</span> <span class="o">=</span> <span class="n">build_nn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">rnn_size</span><span class="p">,</span> <span class="n">input_text</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
+
+    <span class="c"># Probabilities for generating words</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">'probs'</span><span class="p">)</span>
+
+    <span class="c"># Loss function</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">seq2seq</span><span class="o">.</span><span class="n">sequence_loss</span><span class="p">(</span>
+        <span class="n">logits</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">,</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">input_data_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_data_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
+
+    <span class="c"># Optimizer</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">lr</span><span class="p">)</span>
+
+    <span class="c"># Gradient Clipping</span>
+    <span class="n">gradients</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">compute_gradients</span><span class="p">(</span><span class="n">cost</span><span class="p">)</span>
+    <span class="n">capped_gradients</span> <span class="o">=</span> <span class="p">[(</span><span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">),</span> <span class="n">var</span><span class="p">)</span> <span class="k">for</span> <span class="n">grad</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">gradients</span><span class="p">]</span>
+    <span class="n">train_op</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="n">capped_gradients</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<h2 id="train">Train</h2>
+<p>Train the neural network on the preprocessed data.  If you have a hard time getting a good loss, check the <a href="https://discussions.udacity.com/">forms</a> to see if anyone is having the same problem.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="n">batches</span> <span class="o">=</span> <span class="n">get_batches</span><span class="p">(</span><span class="n">int_text</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">train_graph</span><span class="p">)</span> <span class="k">as</span> <span class="n">sess</span><span class="p">:</span>
+    <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">epoch_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">):</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="p">{</span><span class="n">input_text</span><span class="p">:</span> <span class="n">batches</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]})</span>
+
+        <span class="k">for</span> <span class="n">batch_i</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batches</span><span class="p">):</span>
+            <span class="n">feed</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">input_text</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+                <span class="n">targets</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span>
+                <span class="n">initial_state</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+                <span class="n">lr</span><span class="p">:</span> <span class="n">learning_rate</span><span class="p">}</span>
+            <span class="n">train_loss</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">cost</span><span class="p">,</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">train_op</span><span class="p">],</span> <span class="n">feed</span><span class="p">)</span>
+
+            <span class="c"># Show every &lt;show_every_n_batches&gt; batches</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">epoch_i</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span> <span class="o">+</span> <span class="n">batch_i</span><span class="p">)</span> <span class="o">%</span> <span class="n">show_every_n_batches</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">'Epoch {:&gt;3} Batch {:&gt;4}/{}   train_loss = {:.3f}'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">epoch_i</span><span class="p">,</span>
+                    <span class="n">batch_i</span><span class="p">,</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">),</span>
+                    <span class="n">train_loss</span><span class="p">))</span>
+
+    <span class="c"># Save Model</span>
+    <span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+    <span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'Model Trained and Saved'</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Epoch   0 Batch    0/17   train_loss = 8.821
+Epoch   5 Batch   15/17   train_loss = 1.469
+Epoch  11 Batch   13/17   train_loss = 0.182
+Epoch  17 Batch   11/17   train_loss = 0.149
+Epoch  23 Batch    9/17   train_loss = 0.134
+Epoch  29 Batch    7/17   train_loss = 0.129
+Epoch  35 Batch    5/17   train_loss = 0.136
+Epoch  41 Batch    3/17   train_loss = 0.155
+Epoch  47 Batch    1/17   train_loss = 0.167
+Model Trained and Saved
+</code></pre>
+</div>
+
+<h2 id="save-parameters">Save Parameters</h2>
+<p>Save <code class="highlighter-rouge">seq_length</code> and <code class="highlighter-rouge">save_dir</code> for generating a new TV script.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="c"># Save parameters for checkpoint</span>
+<span class="n">helper</span><span class="o">.</span><span class="n">save_params</span><span class="p">((</span><span class="n">seq_length</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<h1 id="checkpoint">Checkpoint</h1>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL
+"""</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">helper</span>
+<span class="kn">import</span> <span class="nn">problem_unittests</span> <span class="kn">as</span> <span class="nn">tests</span>
+
+<span class="n">_</span><span class="p">,</span> <span class="n">vocab_to_int</span><span class="p">,</span> <span class="n">int_to_vocab</span><span class="p">,</span> <span class="n">token_dict</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">load_preprocess</span><span class="p">()</span>
+<span class="n">seq_length</span><span class="p">,</span> <span class="n">load_dir</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">load_params</span><span class="p">()</span>
+</code></pre>
+</div>
+
+<h2 id="implement-generate-functions">Implement Generate Functions</h2>
+<h3 id="get-tensors">Get Tensors</h3>
+<p>Get tensors from <code class="highlighter-rouge">loaded_graph</code> using the function <a href="https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name"><code class="highlighter-rouge">get_tensor_by_name()</code></a>.  Get the tensors using the following names:</p>
+<ul>
+  <li>“input:0”</li>
+  <li>“initial_state:0”</li>
+  <li>“final_state:0”</li>
+  <li>“probs:0”</li>
+</ul>
+
+<p>Return the tensors in the following tuple <code class="highlighter-rouge">(InputTensor, InitialStateTensor, FinalStateTensor, ProbsTensor)</code></p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_tensors</span><span class="p">(</span><span class="n">loaded_graph</span><span class="p">):</span>
+    <span class="s">"""
+    Get input, initial state, final state, and probabilities tensor from &lt;loaded_graph&gt;
+    :param loaded_graph: TensorFlow graph loaded from file
+    :return: Tuple (InputTensor, InitialStateTensor, FinalStateTensor, ProbsTensor)
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">loaded_graph</span><span class="o">.</span><span class="n">get_tensor_by_name</span><span class="p">(</span><span class="s">'input:0'</span><span class="p">)</span>
+    <span class="n">initial_state_tensor</span> <span class="o">=</span> <span class="n">loaded_graph</span><span class="o">.</span><span class="n">get_tensor_by_name</span><span class="p">(</span><span class="s">'initial_state:0'</span><span class="p">)</span>
+    <span class="n">final_state_tensor</span> <span class="o">=</span> <span class="n">loaded_graph</span><span class="o">.</span><span class="n">get_tensor_by_name</span><span class="p">(</span><span class="s">'final_state:0'</span><span class="p">)</span>
+    <span class="n">probs_tensor</span> <span class="o">=</span> <span class="n">loaded_graph</span><span class="o">.</span><span class="n">get_tensor_by_name</span><span class="p">(</span><span class="s">'probs:0'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">initial_state_tensor</span><span class="p">,</span> <span class="n">final_state_tensor</span><span class="p">,</span> <span class="n">probs_tensor</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_get_tensors</span><span class="p">(</span><span class="n">get_tensors</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h3 id="choose-word">Choose Word</h3>
+<p>Implement the <code class="highlighter-rouge">pick_word()</code> function to select the next word using <code class="highlighter-rouge">probabilities</code>.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">pick_word</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">int_to_vocab</span><span class="p">):</span>
+    <span class="s">"""
+    Pick the next word in the generated text
+    :param probabilities: Probabilites of the next word
+    :param int_to_vocab: Dictionary of word ids as the keys and words as the values
+    :return: String of the predicted word
+    """</span>
+    <span class="c"># TODO: Implement Function</span>
+    <span class="n">word_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">probabilities</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">int_to_vocab</span><span class="p">[</span><span class="n">word_id</span><span class="p">]</span>
+
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">test_pick_word</span><span class="p">(</span><span class="n">pick_word</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Tests Passed
+</code></pre>
+</div>
+
+<h2 id="generate-tv-script">Generate TV Script</h2>
+<p>This will generate the TV script for you.  Set <code class="highlighter-rouge">gen_length</code> to the length of TV script you want to generate.</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="n">gen_length</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="c"># homer_simpson, moe_szyslak, or Barney_Gumble</span>
+<span class="n">prime_word</span> <span class="o">=</span> <span class="s">'moe_szyslak'</span>
+
+<span class="s">"""
+DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
+"""</span>
+<span class="n">loaded_graph</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">loaded_graph</span><span class="p">)</span> <span class="k">as</span> <span class="n">sess</span><span class="p">:</span>
+    <span class="c"># Load saved model</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">import_meta_graph</span><span class="p">(</span><span class="n">load_dir</span> <span class="o">+</span> <span class="s">'.meta'</span><span class="p">)</span>
+    <span class="n">loader</span><span class="o">.</span><span class="n">restore</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">load_dir</span><span class="p">)</span>
+
+    <span class="c"># Get Tensors from loaded model</span>
+    <span class="n">input_text</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">probs</span> <span class="o">=</span> <span class="n">get_tensors</span><span class="p">(</span><span class="n">loaded_graph</span><span class="p">)</span>
+
+    <span class="c"># Sentences generation setup</span>
+    <span class="n">gen_sentences</span> <span class="o">=</span> <span class="p">[</span><span class="n">prime_word</span> <span class="o">+</span> <span class="s">':'</span><span class="p">]</span>
+    <span class="n">prev_state</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="p">{</span><span class="n">input_text</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">]])})</span>
+
+    <span class="c"># Generate sentences</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">gen_length</span><span class="p">):</span>
+        <span class="c"># Dynamic Input</span>
+        <span class="n">dyn_input</span> <span class="o">=</span> <span class="p">[[</span><span class="n">vocab_to_int</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">gen_sentences</span><span class="p">[</span><span class="o">-</span><span class="n">seq_length</span><span class="p">:]]]</span>
+        <span class="n">dyn_seq_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dyn_input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c"># Get Prediction</span>
+        <span class="n">probabilities</span><span class="p">,</span> <span class="n">prev_state</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">probs</span><span class="p">,</span> <span class="n">final_state</span><span class="p">],</span>
+            <span class="p">{</span><span class="n">input_text</span><span class="p">:</span> <span class="n">dyn_input</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">prev_state</span><span class="p">})</span>
+        
+        <span class="n">pred_word</span> <span class="o">=</span> <span class="n">pick_word</span><span class="p">(</span><span class="n">probabilities</span><span class="p">[</span><span class="n">dyn_seq_length</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">int_to_vocab</span><span class="p">)</span>
+
+        <span class="n">gen_sentences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred_word</span><span class="p">)</span>
+    
+    <span class="c"># Remove tokens</span>
+    <span class="n">tv_script</span> <span class="o">=</span> <span class="s">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gen_sentences</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">token_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">ending</span> <span class="o">=</span> <span class="s">' '</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">,</span> <span class="s">'('</span><span class="p">,</span> <span class="s">'"'</span><span class="p">]</span> <span class="k">else</span> <span class="s">''</span>
+        <span class="n">tv_script</span> <span class="o">=</span> <span class="n">tv_script</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">' '</span> <span class="o">+</span> <span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">tv_script</span> <span class="o">=</span> <span class="n">tv_script</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s"> '</span><span class="p">,</span> <span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">)</span>
+    <span class="n">tv_script</span> <span class="o">=</span> <span class="n">tv_script</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'( '</span><span class="p">,</span> <span class="s">'('</span><span class="p">)</span>
+        
+    <span class="k">print</span><span class="p">(</span><span class="n">tv_script</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>moe_szyslak:, couldn't for for be. a belch job, how's chuckles matter what i so i total sits right-handed lisa_simpson: follow neat follow around.
+
+belch oh one county me another skills just end i sits! this end my, chocolate he's tomorrow i. a homer_simpson: yeah.
+
+barney_gumble:. moe_szyslak:
+homer_simpson: pretty i all mike excuse milk just a too.
+belch oh one depressin' on)
+
+didn't the has you next to had excuse tick. i follow around me! what's hey, right milk i him have me be.((
+((
+barney_gumble:. homer moe_szyslak: moe_szyslak: moe_szyslak: moe_szyslak: moe_szyslak: moe_szyslak: moe_szyslak:) moe_szyslak: moe_szyslak: i into moe_szyslak: moe_szyslak: i just corkscrews! this are good profiling to, mike hey, i'm chuckles matter you that he end you the, ah.
+barney_gumble:)
+moe_szyslak: moe_szyslak: moe_szyslak: moe_szyslak: i so i dunno the tomorrow you the,, the has, carve problems a your forget, my, how's chuckles skills for would just. a belch job, isn't
+
+belch oh.(
+</code></pre>
+</div>
+
+<h1 id="the-tv-script-is-nonsensical">The TV Script is Nonsensical</h1>
+<p>It’s ok if the TV script doesn’t make any sense.  We trained on less than a megabyte of text.  In order to get good results, you’ll have to use a smaller vocabulary or get more data.  Luckly there’s more data!  As we mentioned in the begging of this project, this is a subset of <a href="https://www.kaggle.com/wcukierski/the-simpsons-by-the-data">another dataset</a>.  We didn’t have you train on all the data, because that would take too long.  However, you are free to train your neural network on all the data.  After you complete the project, of course.</p>
+<h1 id="submitting-this-project">Submitting This Project</h1>
+<p>When submitting this project, make sure to run all the cells before saving the notebook. Save the notebook file as “dlnd_tv_script_generation.ipynb” and save it as a HTML file under “File” -&gt; “Download as”. Include the “helper.py” and “problem_unittests.py” files in your submission.</p>
