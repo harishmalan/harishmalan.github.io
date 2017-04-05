@@ -2,7 +2,7 @@
 
 # Website settings
 title: Harish Malan
-description: harishmalan's blog.
+description: harishmalan's Website.
 keywords: harishmalan,sekaran harish malan,harishmalan,github,gh-pages
 baseurl:  /harishmalan.github.io # if you have suburl as homepage like '/homepage', please change it to '/homepage' and your repo's name should be 'homepage'
 url: http://harishmalan.github.io  # url should be 'http://<github_username>.github.io/homepage' as before
