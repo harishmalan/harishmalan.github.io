@@ -89,7 +89,7 @@ helper.display_stats(cifar10_dataset_folder_path, batch_id, sample_id)
 
 
 ![png](output_3_1.png)
-	<img src="{{ site.img_path }}/output_3_1.png" width="25%">
+	<img src="{{ site.img_path }}/output_3_1.png" width="10%">
 
 ## Implement Preprocess Functions
 ### Normalize
@@ -948,7 +948,7 @@ test_model()
 
 
 ![png](output_36_1.png)
-	<img src="{{ site.img_path }}/output_36_1.png" width="25%">
+	<img src="{{ site.img_path }}/output_36_1.png" width="50%">
 
 
 ## Why 50-70% Accuracy?
