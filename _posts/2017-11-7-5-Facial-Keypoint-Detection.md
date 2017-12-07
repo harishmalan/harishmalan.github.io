@@ -125,7 +125,7 @@ ax1.imshow(image)
 
 
 
-![png](output_6_1.png)
+![png](cv_fk/output_6_1.png)
 
 
 There are a lot of people - and faces - in this picture.  13 faces to be exact!  In the next code cell, we demonstrate how to use a Haar Cascade classifier to detect all the faces in this test image.
@@ -180,7 +180,7 @@ ax1.imshow(image_with_detections)
 
 
 
-![png](output_8_2.png)
+![png](cv_fk/output_8_2.png)
 
 
 In the above code, `faces` is a numpy array of detected faces, where each row corresponds to a detected face.  Each detected face is a 1D array with four entries that specifies the bounding box of the detected face.  The first two entries in the array (extracted in the above code as `x` and `y`) specify the horizontal and vertical positions of the top left corner of the bounding box.  The last two entries in the array (extracted here as `w` and `h`) specify the width and height of the box.
