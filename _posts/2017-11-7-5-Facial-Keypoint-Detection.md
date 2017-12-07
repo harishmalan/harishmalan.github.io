@@ -125,7 +125,8 @@ ax1.imshow(image)
 
 
 
-![png](cv_fk/output_6_1.png)
+![png](output_6_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_6_1.png" width="25%">
 
 
 There are a lot of people - and faces - in this picture.  13 faces to be exact!  In the next code cell, we demonstrate how to use a Haar Cascade classifier to detect all the faces in this test image.
@@ -181,6 +182,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](cv_fk/output_8_2.png)
+	<img src="{{ site.img_path }}/cv_fk/output_8_2.png" width="25%">
 
 
 In the above code, `faces` is a numpy array of detected faces, where each row corresponds to a detected face.  Each detected face is a 1D array with four entries that specifies the bounding box of the detected face.  The first two entries in the array (extracted in the above code as `x` and `y`) specify the horizontal and vertical positions of the top left corner of the bounding box.  The last two entries in the array (extracted here as `w` and `h`) specify the width and height of the box.
@@ -221,6 +223,7 @@ ax1.imshow(image)
 
 
 ![png](output_12_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_12_1.png" width="25%">
 
 
 Notice that even though the image is a black and white image, we have read it in as a color image and so it will still need to be converted to grayscale in order to perform the most accurate face detection.
@@ -272,7 +275,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](output_14_2.png)
-
+	<img src="{{ site.img_path }}/cv_fk/output_14_2.png" width="25%">
 
 ### (IMPLEMENTATION) Add an eye detector to the current face detection setup.  
 
@@ -334,6 +337,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](output_17_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_17_1.png" width="25%">
 
 
 ## (Optional) Add face and eye detection to your laptop camera
@@ -452,6 +456,7 @@ ax1.imshow(image_with_noise)
 
 
 ![png](output_24_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_24_1.png" width="25%">
 
 
 In the context of face detection, the problem with an image like this is that  - due to noise - we may miss some faces or get false detections.  
@@ -503,6 +508,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](output_26_2.png)
+	<img src="{{ site.img_path }}/cv_fk/output_26_2.png" width="25%">
 
 
 With this added noise we now miss one of the faces!
@@ -542,6 +548,7 @@ ax1.imshow(denoised_image)
 
 
 ![png](output_29_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_29_1.png" width="25%">
 
 
 
@@ -587,6 +594,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](output_30_2.png)
+	<img src="{{ site.img_path }}/cv_fk/output_30_2.png" width="25%">
 
 
 ---
@@ -655,6 +663,7 @@ ax2.imshow(edges, cmap='gray')
 
 
 ![png](output_35_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_35_1.png" width="25%">
 
 
 Without first blurring the image, and removing small, local structures, a lot of irrelevant edge content gets picked up and amplified by the detector (as shown in the right panel above). 
@@ -713,6 +722,7 @@ ax2.imshow(edges, cmap='gray')
 
 
 ![png](output_38_1.png)
+<img src="{{ site.img_path }}/cv_fk/output_38_1.png" width="25%">
 
 
 ---
@@ -756,6 +766,7 @@ ax1.imshow(image)
 
 
 ![png](output_41_1.png)
+<img src="{{ site.img_path }}/cv_fk/output_41_1.png" width="25%">
 
 
 ### (IMPLEMENTATION) Use blurring to hide the identity of an individual in an image
@@ -811,6 +822,7 @@ ax1.imshow(image_with_detections)
 
 
 ![png](output_43_2.png)
+<img src="{{ site.img_path }}/cv_fk/output_43_1.png" width="25%">
 
 
 ### (Optional) Build identity protection into your laptop camera
@@ -943,6 +955,7 @@ for i in range(9):
 
 
 ![png](output_52_0.png)
+<img src="{{ site.img_path }}/cv_fk/output_52_0.png" width="25%">
 
 
 For each training image, there are two landmarks per eyebrow (**four** total), three per eye (**six** total), **four** for the mouth, and **one** for the tip of the nose.  
@@ -1382,6 +1395,7 @@ plt.show()
 
 
 ![png](output_61_0.png)
+	<img src="{{ site.img_path }}/cv_fk/output_61_0.png" width="25%">
 
 
 
@@ -1415,10 +1429,12 @@ plt.show()
 
 
 ![png](output_63_0.png)
+	<img src="{{ site.img_path }}/cv_fk/output_63_0.png" width="25%">
 
 
 
 ![png](output_63_1.png)
+	<img src="{{ site.img_path }}/cv_fk/output_63_1.png" width="25%">
 
 
 __Question 3:__  Do you notice any evidence of overfitting or underfitting in the above plot?  If so, what steps have you taken to improve your model?  Note that slight overfitting or underfitting will not hurt your chances of a successful submission, as long as you have attempted some solutions towards improving your model (such as _regularization, dropout, increased/decreased number of layers, etc_).
@@ -1441,6 +1457,7 @@ for i in range(9):
 
 
 ![png](output_66_0.png)
+	<img src="{{ site.img_path }}/cv_fk/output_66_0.png" width="25%">
 
 
 ---
@@ -1542,6 +1559,7 @@ ax1.imshow(image_copy)
 
 
 ![png](output_69_2.png)
+	<img src="{{ site.img_path }}/cv_fk/output_69_2.png" width="25%">
 
 
 ### (Optional) Further Directions - add a filter using facial keypoints to your laptop camera
@@ -1621,6 +1639,7 @@ ax1.axis('off');
 
 
 ![png](output_74_0.png)
+<img src="{{ site.img_path }}/cv_fk/output_74_0.png" width="25%">
 
 
 This image is placed over each individual's face using the detected eye points to determine the location of the sunglasses, and eyebrow points to determine the size that the sunglasses should be for each person (one could also use the nose point to determine this).  
@@ -1704,7 +1723,7 @@ ax1.imshow(image)
 
 
 ![png](output_80_1.png)
-
+	<img src="{{ site.img_path }}/cv_fk/output_80_1.png" width="25%">
 
 
 ```python
@@ -1793,7 +1812,7 @@ ax1.imshow(image_copy)
 
 
 ![png](output_81_2.png)
-
+	<img src="{{ site.img_path }}/cv_fk/output_81_2.png" width="25%">
 
 ###  (Optional) Further Directions - add a filter using facial keypoints to your laptop camera 
 
